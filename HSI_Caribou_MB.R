@@ -1,9 +1,3 @@
-## Everything in this file and any files in the R directory are sourced during `simInit()`;
-## all functions and objects are put into the `simList`.
-## To use objects, use `sim$xxx` (they are globally available to all modules).
-## Functions can be used inside any function that was sourced in this module;
-## they are namespaced to the module, just like functions in R packages.
-## If exact location is required, functions will be: `sim$.mods$<moduleName>$FunctionName`.
 defineModule(sim, list(
   name = "HSI_Caribou_MB",
   description = "Manitoba caribou habitat sutibility metrics from NRV simulation models",
@@ -19,6 +13,7 @@ defineModule(sim, list(
   documentation = list("README.md", "HSI_Caribou_MB.Rmd"), ## same file
   reqdPkgs = list(
     "crayon", "dplyr", "exactextractr", "fs", "future.apply", "future.callr", "ggplot2",
+    "PredictiveEcology/LandR@development",
     "PredictiveEcology/LandWebUtils@development (>= 0.1.5)",
     "PredictiveEcology/map@development",
     "raster", "sf", "sp",
@@ -43,8 +38,6 @@ defineModule(sim, list(
                     "simulation time interval at which to take 'snapshots' used for summary analyses"),
     defineParameter("summaryPeriod", "integer", c(700L, 1000L), NA, NA,
                     "lower and upper end of the range of simulation times used for summary analyses"),
-    defineParameter("timeSeriesTimes", "numeric", 601:650, NA, NA,
-                    "simulation times for which to build time steries animations."),
     defineParameter("upload", "logical", FALSE, NA, NA,
                     "if TRUE, uses the `googledrive` package to upload figures."),
     defineParameter("uploadTo", "character", NA, NA, NA,
@@ -92,15 +85,12 @@ doEvent.HSI_Caribou_MB = function(sim, eventTime, eventType) {
   switch(
     eventType,
     init = {
-      ### check for more detailed object dependencies:
-      ### (use `checkObject` or similar)
-
-      # do stuff for this event
       sim <- Init(sim)
 
       # schedule future event(s)
       sim <- scheduleEvent(sim, end(sim), "HSI_Caribou_MB", "postprocess", .last())
       sim <- scheduleEvent(sim, end(sim), "HSI_Caribou_MB", "plot", .last())
+      sim <- scheduleEvent(sim, end(sim), "HSI_Caribou_MB", "save", .last())
       if (isTRUE(P(sim)$upload)) {
         sim <- scheduleEvent(sim, end(sim), "HSI_Caribou_MB", "upload", .last())
       }
@@ -109,16 +99,10 @@ doEvent.HSI_Caribou_MB = function(sim, eventTime, eventType) {
       sim <- postprocess(sim)
     },
     plot = {
-      # ! ----- EDIT BELOW ----- ! #
-      # do stuff for this event
-
-      plotFun(sim) # example of a plotting function
-      # schedule future event(s)
-
-      # e.g.,
-      #sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval, "HSI_PineMarten", "plot")
-
-      # ! ----- STOP EDITING ----- ! #
+      sim <- plotFun(sim)
+    },
+    save = {
+      sim <- saveFun(sim)
     },
     upload = {
       # ! ----- EDIT BELOW ----- ! #
@@ -230,20 +214,20 @@ calculateHSI <- function(summaryPolys, polyCol, maxAge, vtm, tsf) {
     vtm <- gsub("rstTimeSinceFire", "vegTypeMap", tsf)
     vtmRas <- vtmListByPoly[[vtm]]
     vtmRAT <- raster::levels(vtmRas)[[1]]
-    vtmTbl <- data.frame(leading = c("Pine", "Conifer", "Mixed", "Deciduous"), HSI = c(3, 2, 1, 0))
+    vtmTbl <- data.frame(leading = c("Pine", "Conifer", "Mixed", "Deciduous"), HSI = c(3L, 2L, 1L, 0L))
 
     ## TODO: how are we dealing with non-productive / wetland types?? we don't have suitable layers.
     ## other.high <- "Treed Bog"
     ## other.med <- c("Shrubby Bog", "Treed Fen", "Shrubby Fen", "Treed Swamp (Conifer)")
     ## other.low <- c("Bedrock", "Gramminoid Bog")
-browser()
+
     hsi_vtm <- raster(vtmRas)
     vtmSpp <- vtmRAT[match(vtmRas[], vtmRAT$ID), ][["VALUE"]]
     mixedIDs <- which(vtmSpp == "Mixed")
-    pineIDs <- which(grepl("Pine", vtmSpp))
+    pineIDs <- which(grepl("Pinu_sp", vtmSpp))
     vtmLead <- equivalentName(vtmSpp, sppEquivalencies_CA, "Type", searchColumn = "LandR")
     vtmLead[mixedIDs] <- "Mixed"
-    vtmLead[PineIDs] <- "Pine"
+    vtmLead[pineIDs] <- "Pine"
     hsi_vtm[] <- vtmTbl[match(vtmLead, vtmTbl$leading), ][["HSI"]]
 
 
@@ -270,26 +254,15 @@ browser()
 
   hsi_df$hsi <- as.factor(hsi_df$hsi)
   hsi_df <- hsi_df %>%
-    group_by(hsi, area, time) %>%
-    summarise(N = length(prop), mn = mean(prop), sd = sd(prop),
-              se = sd / sqrt(N), ci = se * qt(0.975, N - 1))
+    group_by(hsi, area)
 
   return(hsi_df)
 }
 
 ## postprocessing
 postprocess <- function(sim) {
-  #sAR <- studyArea(sim$ml, 2) ## TODO: ml from loadSimList isn't working -- all NULL
-  sAR <- sim$ml[[grep("studyAreaReporting", names(sim$ml), value = TRUE)]] %>% st_as_sf()
-
-  .ncores <- pemisc::optimalClusterNum(5000, maxNumClusters = min(parallel::detectCores() / 2, 32L)) ## TODO: use module param
+  .ncores <- pemisc::optimalClusterNum(5000, maxNumClusters = min(parallel::detectCores() / 2, 24L)) ## TODO: use module param
   options(future.availableCores.fallback = .ncores)
-
-  ## BEC zones
-  message("rasterizing BEC zones polygons...")
-  becZones <- Cache(postProcess, sim$becZones, studyArea = sAR)
-  becZones <- sf::st_collection_extract(becZones) ## st_cast(becZones, "MULTIPOLYGON")
-  sim$becZonesRst <- rasterizeBEC(sim$becZones, sAR, sim$rasterToMatchReporting)
 
   ## current conditions
   vtmCC <- Cache(vegTypeMapGenerator,
@@ -308,62 +281,49 @@ postprocess <- function(sim) {
   raster::writeRaster(tsfCC, fname2, datatype = "INT1U", overwrite = TRUE)
 
   ## HSI by polygons
-  message(crayon::magenta("Calculating HSI by landscape unit..."))
-  mod$hsi_df_LU_CC <- suppressWarnings({
-    calculateHSI(sim$becZonesRst, summaryPolys = sAR,
-                 polyCol = P(sim)$studyAreaNamesCol,
-                 disturbanceAgeCutoff = P(sim)$disturbanceAgeCutoff,
+  message(crayon::magenta("Calculating HSI by caribou unit...")) ## TODO: which polys?
+  mod$hsi_df_MB_CC <- suppressWarnings({
+    calculateHSI(summaryPolys = sim$ml[["MB Caribou"]],
+                 polyCol = "RANGE_NAME",
                  maxAge = P(sim)$ageClassMaxAge,
                  tsf = fname2, vtm = fname1)
   })
-  mod$hsi_df_LU <- calculateHSI(sim$becZonesRst, summaryPolys = sAR,
-                                polyCol = P(sim)$studyAreaNamesCol,
-                                disturbanceAgeCutoff = P(sim)$disturbanceAgeCutoff,
+  mod$hsi_df_MB <- calculateHSI(summaryPolys = sim$ml[["MB Caribou"]],
+                                polyCol = "RANGE_NAME",
                                 maxAge = P(sim)$ageClassMaxAge,
                                 tsf = mod$tsf, vtm = mod$vtm)
-
-  message(crayon::magenta("Calculating HSI by BEC zone..."))
-  mod$hsi_df_BEC_CC <- suppressWarnings({
-    calculateHSI(sim$becZonesRst, summaryPolys = becZones,
-                 polyCol = "ZONE",
-                 disturbanceAgeCutoff = P(sim)$disturbanceAgeCutoff,
-                 maxAge = P(sim)$ageClassMaxAge,
-                 tsf = fname2, vtm = fname1)
-  })
-  mod$hsi_df_BEC <- calculateHSI(sim$becZonesRst, summaryPolys = becZones,
-                                 polyCol = "ZONE",
-                                 disturbanceAgeCutoff = P(sim)$disturbanceAgeCutoff,
-                                 maxAge = P(sim)$ageClassMaxAge,
-                                 tsf = mod$tsf, vtm = mod$vtm)
 
   return(invisible(sim))
 }
 
 ## plotting
-plot_over_time <- function(summary_df, ylabel) {
-  ggplot(summary_df, aes(x = time, y = mn, col = hsi)) +
-    geom_point() +
-    geom_line() +
-    geom_errorbar(aes(ymin = mn - sd, ymax = mn + sd), width = 0.5) +
-    ylab(ylabel)
-}
-
 plotFun <- function(sim) {
   # ! ----- EDIT BELOW ----- ! #
 
-  ## TODO: use Plots
-  #Plots(mod$hsi_df, fn = plot_over_time, ylabel = "Pine Marten HSI") ## ??
-  gg1 <- plot_over_time(mod$hsi_df_LU, "Pine Marten HSI") +
-    facet_wrap(~area) +
-    geom_hline(data = mod$hsi_df_LU_CC, aes(yintercept = mn, col = hsi), linetype = 2)
-  ggsave(file.path(outputPath(sim), "figures", "Pine_Marten_HSI_facet_by_LU.png"), gg1)
+  figPath <- checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
 
-  gg3 <- plot_over_time(mod$hsi_df_BEC, "Pine Marten HSI") +
+  ## TODO: use Plots
+  gg1 <- ggplot(mod$hsi_df_MB, aes(x = hsi, y = prop)) +
     facet_wrap(~area) +
-    geom_hline(data = mod$hsi_df_BEC_CC, aes(yintercept = mn, col = hsi), linetype = 2)
-  ggsave(file.path(outputPath(sim), "figures", "Pine_Marten_HSI_facet_by_BEC.png"), gg3)
+    geom_boxplot() +
+    coord_flip() +
+    xlab("Simplified Caribou HSI") +
+    ylab("Proportion of Polygon Area") +
+    geom_point(data = mod$hsi_df_MB_CC, aes(col = "darkred")) +
+    theme_bw() +
+    theme(legend.position = "none")
+  ggsave(file.path(figPath, "Caribou_HSI_facet_by_caribou_unit.png"), gg1, height = 8, width = 12)
+
+  mod$hsi_gg <- gg1
 
   # ! ----- STOP EDITING ----- ! #
+  return(invisible(sim))
+}
+
+saveFun <- function(sim) {
+  hsi_df <- rbind(mod$hsi_df_MB, mod$hsi_df_MB)
+  write.csv(hsi_df, file.path(outputPath(sim), "HSI_caribou.csv"), row.names = FALSE)
+
   return(invisible(sim))
 }
 
@@ -374,8 +334,8 @@ plotFun <- function(sim) {
 
   # ! ----- EDIT BELOW ----- ! #
 
-  targetCRS <- paste("+proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95",
-                     "+x_0=0 +y_0=0 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0") # LandWeb
+  mod$targetCRS <- paste("+proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95",
+                         "+x_0=0 +y_0=0 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0") # LandWeb
 
   # ! ----- STOP EDITING ----- ! #
   return(invisible(sim))
