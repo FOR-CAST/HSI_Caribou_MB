@@ -249,12 +249,12 @@ calculateHSI <- function(summaryPolys, polyCol, maxAge, vtm, tsf) {
     data.frame(id = 1L:ncell(hsiListByPoly[[i]]), hsi = hsiListByPoly[[i]][]) %>%
       na.omit(.) %>%
       count(., hsi) %>%
-      mutate(., prop = n/sum(n), rep = tsfReps[i], time = tsfTimes[i], area = tsfStudyAreas[i])
+      mutate(., prop = n/sum(n), rep = tsfReps[i], time = tsfTimes[i], poly = tsfStudyAreas[i])
   }))
 
   hsi_df$hsi <- as.factor(hsi_df$hsi)
   hsi_df <- hsi_df %>%
-    group_by(hsi, area)
+    group_by(hsi, poly)
 
   return(hsi_df)
 }
@@ -282,16 +282,22 @@ postprocess <- function(sim) {
 
   ## HSI by polygons
   message(crayon::magenta("Calculating HSI by caribou unit...")) ## TODO: which polys?
+  area_df = data.frame(
+    poly = sim$ml[["MB Caribou Ranges"]][["RANGE_NAME"]],
+    areaha = st_as_sf(sim$ml[["MB Caribou Ranges"]]) %>% st_area() %>% units::set_units(ha) %>% as.numeric()
+  )
   mod$hsi_df_MB_CC <- suppressWarnings({
     calculateHSI(summaryPolys = sim$ml[["MB Caribou"]],
                  polyCol = "RANGE_NAME",
                  maxAge = P(sim)$ageClassMaxAge,
-                 tsf = fname2, vtm = fname1)
+                 tsf = fname2, vtm = fname1) %>%
+      left_join(area_df)
   })
   mod$hsi_df_MB <- calculateHSI(summaryPolys = sim$ml[["MB Caribou"]],
                                 polyCol = "RANGE_NAME",
                                 maxAge = P(sim)$ageClassMaxAge,
-                                tsf = mod$tsf, vtm = mod$vtm)
+                                tsf = mod$tsf, vtm = mod$vtm) %>%
+    left_join(area_df)
 
   return(invisible(sim))
 }
@@ -300,16 +306,17 @@ postprocess <- function(sim) {
 plotFun <- function(sim) {
   # ! ----- EDIT BELOW ----- ! #
 
-  figPath <- checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
-
   ## TODO: use Plots
+  figPath <- checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
+  lbls <- unique(paste0(mod$hsi_df_MB$poly, " (", round(mod$hsi_df_MB$areaha), " ha)"))
+  names(lbls) <- unique(mod$hsi_df_MB$poly)
   gg1 <- ggplot(mod$hsi_df_MB, aes(x = hsi, y = prop)) +
-    facet_wrap(~area) +
-    geom_boxplot() +
+    facet_wrap(~poly, labeller = labeller(poly = lbls)) +
+    geom_boxplot(outlier.colour = "grey4", outlier.shape = 21, outlier.size = 1.0) +
     coord_flip() +
     xlab("Simplified Caribou HSI") +
     ylab("Proportion of Polygon Area") +
-    geom_point(data = mod$hsi_df_MB_CC, aes(col = "darkred")) +
+    geom_point(data = mod$hsi_df_MB_CC, col = "darkred", size = 2.5) +
     theme_bw() +
     theme(legend.position = "none")
   ggsave(file.path(figPath, "Caribou_HSI_facet_by_caribou_unit.png"), gg1, height = 8, width = 12)
