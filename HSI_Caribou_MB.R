@@ -307,7 +307,6 @@ plotFun <- function(sim) {
   # ! ----- EDIT BELOW ----- ! #
 
   ## TODO: use Plots
-  figPath <- checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
   lbls <- unique(paste0(mod$hsi_df_MB$poly, " (", round(mod$hsi_df_MB$areaha), " ha)"))
   names(lbls) <- unique(mod$hsi_df_MB$poly)
   gg1 <- ggplot(mod$hsi_df_MB, aes(x = hsi, y = prop)) +
@@ -319,7 +318,7 @@ plotFun <- function(sim) {
     geom_point(data = mod$hsi_df_MB_CC, col = "darkred", size = 2.5) +
     theme_bw() +
     theme(legend.position = "none")
-  ggsave(file.path(figPath, "Caribou_HSI_facet_by_caribou_unit.png"), gg1, height = 8, width = 12)
+  ggsave(file.path(figurePath(sim), "Caribou_HSI_facet_by_caribou_unit.png"), gg1, height = 8, width = 12)
 
   mod$hsi_gg <- gg1
 
@@ -346,4 +345,12 @@ saveFun <- function(sim) {
 
   # ! ----- STOP EDITING ----- ! #
   return(invisible(sim))
+}
+
+## older version of SpaDES.core used here doesn't have this function
+if (packageVersion("SpaDES.core") < "2.0.2.9001") {
+  figurePath <- function(sim) {
+    file.path(outputPath(sim), "figures", current(sim)[["moduleName"]]) |>
+      checkPath(create = TRUE)
+  }
 }

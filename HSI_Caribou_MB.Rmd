@@ -72,7 +72,7 @@ Table \@ref(tab:moduleInputs-HSI-Caribou-MB) shows the full list of module input
 df_inputs <- SpaDES.core::moduleInputs("HSI_Caribou_MB", "..")
 knitr::kable(df_inputs,
              caption = "List of (ref:HSI-Caribou-MB) input objects and their description.") %>%
-  kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
+  kableExtra::kable_styling(latex_options = "scale_down", full_width = FALSE)
 ```
 
 Provide a summary of user-visible parameters (Table \@ref(tab:moduleParams-HSI-Caribou-MB))
@@ -81,7 +81,7 @@ Provide a summary of user-visible parameters (Table \@ref(tab:moduleParams-HSI-C
 ```{r moduleParams-HSI-Caribou-MB, echo = FALSE, eval = TRUE, message = FALSE, warning = FALSE}
 df_params <- SpaDES.core::moduleParams("HSI_Caribou_MB", "..")
 knitr::kable(df_params, caption = "List of (ref:HSI-Caribou-MB) parameters and their description.") %>%
-  kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
+  kableExtra::kable_styling(latex_options = "scale_down", full_width = FALSE)
 ```
 
 ### Events
@@ -103,7 +103,7 @@ Description of the module outputs (Table \@ref(tab:moduleOutputs-HSI-Caribou-MB)
 ```{r moduleOutputs-HSI-Caribou-MB, echo = FALSE, eval = TRUE, message = FALSE, warning = FALSE}
 df_outputs <- SpaDES.core::moduleOutputs("HSI_Caribou_MB", "..")
 knitr::kable(df_outputs, caption = "List of (ref:HSI-Caribou-MB) outputs and their description.") %>%
-  kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
+  kableExtra::kable_styling(latex_options = "scale_down", full_width = FALSE)
 ```
 
 ### Links to other modules
