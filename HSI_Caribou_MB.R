@@ -178,7 +178,7 @@ calculateHSI <- function(summaryPolys, polyCol, maxAge, vtm, tsf) {
 
   ## vegetation type maps
   message("|_ loading vegetation type maps...")
-  vtmListByPoly <- rasterListByPoly(files = vtm, poly = summaryPolys, names = polyNames,
+  vtmListByPoly <- rasterListByPoly(files = vtm, polys = summaryPolys, names = polyNames,
                                     col = polyCol, filter = "vegTypeMap_") ## TODO: cache this
   vtmReps <- attr(vtmListByPoly, "reps")
   vtmTimes <- attr(vtmListByPoly, "times")
@@ -186,7 +186,7 @@ calculateHSI <- function(summaryPolys, polyCol, maxAge, vtm, tsf) {
 
   ## time since fire maps
   message("|_ loading time since fire maps...")
-  tsfListByPoly <- rasterListByPoly(files = tsf, poly = summaryPolys, names = polyNames,
+  tsfListByPoly <- rasterListByPoly(files = tsf, polys = summaryPolys, names = polyNames,
                                     col = polyCol, filter = "rstTimeSinceFire_") ## TODO: cache this
   tsfReps <- attr(tsfListByPoly, "reps")
   tsfTimes <- attr(tsfListByPoly, "times")
