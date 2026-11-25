@@ -81,7 +81,7 @@ defineModule(sim, list(
 ## event types
 #   - type `init` is required for initialization
 
-doEvent.HSI_Caribou_MB = function(sim, eventTime, eventType) {
+doEvent.HSI_Caribou_MB <- function(sim, eventTime, eventType) {
   switch(
     eventType,
     init = {
