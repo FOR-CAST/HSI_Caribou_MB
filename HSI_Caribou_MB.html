@@ -2973,7 +2973,7 @@ border-radius: 0px;
 
 <h1 class="title toc-ignore">HSI_Caribou_MB Manual</h1>
 <h3 class="subtitle">v.0.0.0.9000</h3>
-<h4 class="date">Last updated: 2026-08-20</h4>
+<h4 class="date">Last updated: 2026-11-25</h4>
 
 </div>
 
@@ -3092,6 +3092,9 @@ max
 <th style="text-align:left;">
 paramDesc
 </th>
+<th style="text-align:left;">
+cacheKey
+</th>
 </tr>
 </thead>
 <tbody>
@@ -3114,6 +3117,9 @@ NA
 <td style="text-align:left;">
 descriptions/labels for age classes (seral stages)
 </td>
+<td style="text-align:left;">
+TRUE
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -3133,6 +3139,9 @@ NA
 </td>
 <td style="text-align:left;">
 defines the age boundaries between age classes
+</td>
+<td style="text-align:left;">
+TRUE
 </td>
 </tr>
 <tr>
@@ -3154,6 +3163,9 @@ NA
 <td style="text-align:left;">
 maximum possible age
 </td>
+<td style="text-align:left;">
+TRUE
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -3173,6 +3185,9 @@ NA
 </td>
 <td style="text-align:left;">
 defines the age boundary between ‘disturbed’ and ‘undisturbed’ for HSI classification.
+</td>
+<td style="text-align:left;">
+TRUE
 </td>
 </tr>
 <tr>
@@ -3194,6 +3209,9 @@ NA
 <td style="text-align:left;">
 number of replicates/runs per study area.
 </td>
+<td style="text-align:left;">
+TRUE
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -3213,6 +3231,9 @@ NA
 </td>
 <td style="text-align:left;">
 The column in <code>sim$sppEquiv</code> data.table to use as a naming convention
+</td>
+<td style="text-align:left;">
+TRUE
 </td>
 </tr>
 <tr>
@@ -3234,6 +3255,9 @@ NA
 <td style="text-align:left;">
 column name used to identify names of subpolygons (features) the study area polygon.
 </td>
+<td style="text-align:left;">
+TRUE
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -3253,6 +3277,9 @@ NA
 </td>
 <td style="text-align:left;">
 simulation time interval at which to take ‘snapshots’ used for summary analyses
+</td>
+<td style="text-align:left;">
+TRUE
 </td>
 </tr>
 <tr>
@@ -3274,6 +3301,9 @@ NA
 <td style="text-align:left;">
 lower and upper end of the range of simulation times used for summary analyses
 </td>
+<td style="text-align:left;">
+TRUE
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -3293,6 +3323,9 @@ NA
 </td>
 <td style="text-align:left;">
 if TRUE, uses the <code>googledrive</code> package to upload figures.
+</td>
+<td style="text-align:left;">
+TRUE
 </td>
 </tr>
 <tr>
@@ -3314,6 +3347,9 @@ NA
 <td style="text-align:left;">
 if <code>upload = TRUE</code>, a Google Drive folder id corresponding to <code>.studyAreaName</code>.
 </td>
+<td style="text-align:left;">
+TRUE
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -3333,6 +3369,9 @@ numeric
 </td>
 <td style="text-align:left;">
 a number that defines whether a species is leading for a given pixel
+</td>
+<td style="text-align:left;">
+TRUE
 </td>
 </tr>
 <tr>
@@ -3354,6 +3393,9 @@ NA
 <td style="text-align:left;">
 Used by Plots function, which can be optionally used here
 </td>
+<td style="text-align:left;">
+TRUE
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -3373,6 +3415,9 @@ NA
 </td>
 <td style="text-align:left;">
 Describes the simulation time at which the first plot event should occur.
+</td>
+<td style="text-align:left;">
+TRUE
 </td>
 </tr>
 <tr>
@@ -3394,6 +3439,9 @@ NA
 <td style="text-align:left;">
 Describes the simulation time interval between plot events.
 </td>
+<td style="text-align:left;">
+TRUE
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -3413,6 +3461,9 @@ NA
 </td>
 <td style="text-align:left;">
 Describes the simulation time at which the first save event should occur.
+</td>
+<td style="text-align:left;">
+TRUE
 </td>
 </tr>
 <tr>
@@ -3434,6 +3485,9 @@ NA
 <td style="text-align:left;">
 This describes the simulation time interval between save events.
 </td>
+<td style="text-align:left;">
+TRUE
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -3454,6 +3508,9 @@ NA
 <td style="text-align:left;">
 Human-readable name for the study area used - e.g., a hash of the studyarea obtained using <code>reproducible::studyAreaName()</code>
 </td>
+<td style="text-align:left;">
+TRUE
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -3472,6 +3529,9 @@ NA
 </td>
 <td style="text-align:left;">
 Named list of seeds to use for each event (names).
+</td>
+<td style="text-align:left;">
+TRUE
 </td>
 </tr>
 <tr>
@@ -3492,6 +3552,9 @@ NA
 </td>
 <td style="text-align:left;">
 Should caching of events or module be used?
+</td>
+<td style="text-align:left;">
+TRUE
 </td>
 </tr>
 </tbody>
